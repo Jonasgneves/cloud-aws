@@ -7,6 +7,7 @@ import { AccessLogFormat } from 'aws-cdk-lib/aws-apigateway'
 
 interface ECommerceApiStackProps extends cdk.StackProps {
   productsFetchHandler: lambdaNodeJs.NodejsFunction
+  
 }
 
 export class ECommerceApiStack extends cdk.Stack {
@@ -15,6 +16,7 @@ export class ECommerceApiStack extends cdk.Stack {
     super(scope, id, props)
     
     const logGroup = new cwLogs.LogGroup(this, 'ECommerceApiLogs')
+
     const api = new apiGateway.RestApi(this, 'ECommerceApi', {
       restApiName: 'ECommerceApi',
       deployOptions: {
@@ -30,7 +32,8 @@ export class ECommerceApiStack extends cdk.Stack {
           caller: true,
           user: true
         })
-      }
+      },
+      cloudWatchRole: true
     })
 
     const productsFetchIntegration = new apiGateway.LambdaIntegration(props.productsFetchHandler)
