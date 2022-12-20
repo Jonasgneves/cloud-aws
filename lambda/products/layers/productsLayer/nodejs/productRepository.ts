@@ -74,10 +74,10 @@ export class ProductRepository {
       ConditionExpression: 'attribute_exists(id)',
       ReturnValues: 'UPDATED_NEW',
       UpdateExpression: 'set productName = :n, code = :c, price = :p, model = :m',
-      ExpressionAttributeNames: {
+      ExpressionAttributeValues: {
         ':n': product.productName,
         ':c': product.code,
-        ':p': String(product.price),
+        ':p': product.price as any,
         ':m': product.model
       }
     }).promise()
