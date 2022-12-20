@@ -7,7 +7,7 @@ import { AccessLogFormat } from 'aws-cdk-lib/aws-apigateway'
 
 interface ECommerceApiStackProps extends cdk.StackProps {
   productsFetchHandler: lambdaNodeJs.NodejsFunction
-  
+  productsAdminHandler: lambdaNodeJs.NodejsFunction
 }
 
 export class ECommerceApiStack extends cdk.Stack {
@@ -41,5 +41,21 @@ export class ECommerceApiStack extends cdk.Stack {
     // "/products"
     const productsResources = api.root.addResource('products')
     productsResources.addMethod('GET', productsFetchIntegration)
+
+    // GET products/{id}
+    const productsIdResource = productsResources.addResource('{id}')
+    productsIdResource.addMethod('GET', productsFetchIntegration)
+
+    const productAdminIntegration = new apiGateway.LambdaIntegration(props.productsAdminHandler)
+
+    // POST /products
+    productsResources.addMethod('POST', productAdminIntegration)
+
+    // PUT /products/{id}
+    productsIdResource.addMethod('PUT', productAdminIntegration)
+
+    // DELETE /products/{id}
+    productsIdResource.addMethod('DELETE', productAdminIntegration)
+
   }
 }
