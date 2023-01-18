@@ -22,7 +22,19 @@ export class ordersAppStack extends cdk.Stack {
       sortKey: {
         name: 'sk',
         type: dynamodb.AttributeType.STRING
-      }
+      },
+      billingMode: dynamodb.BillingMode.PROVISIONED,
+      readCapacity: 1,
+      writeCapacity: 1
     })
+
+    //Orders layer
+    const ordersLayerArn = ssm.StringParameter.valueForStringParameter(this, 'ProductsLayerVersionArn')
+    const ordersLayer = lambda.LayerVersion.fromLayerVersionArn(this, 'ProductsLayerVersionArn', productsLayerArn)
+    
+    //Products Layer
+    const productsLayerArn = ssm.StringParameter.valueForStringParameter(this, 'ProductsLayerVersionArn')
+    const productsLayer = lambda.LayerVersion.fromLayerVersionArn(this, 'ProductsLayerVersionArn', productsLayerArn)
+    
   }
 }
