@@ -10,6 +10,8 @@ interface OrdersAppStackProps extends cdk.StackProps {
 }
 
 export class ordersAppStack extends cdk.Stack {
+  readonly ordersHandler: lamnbdaNodeJs.NodejsFunction
+
   constructor(scop: Construct, id: string, props: OrdersAppStackProps) {
     super (scop, id, props)
 
@@ -29,12 +31,32 @@ export class ordersAppStack extends cdk.Stack {
     })
 
     //Orders layer
-    const ordersLayerArn = ssm.StringParameter.valueForStringParameter(this, 'ProductsLayerVersionArn')
-    const ordersLayer = lambda.LayerVersion.fromLayerVersionArn(this, 'ProductsLayerVersionArn', productsLayerArn)
+    const ordersLayerArn = ssm.StringParameter.valueForStringParameter(this, 'OrdersLayerVersionArn')
+    const ordersLayer = lambda.LayerVersion.fromLayerVersionArn(this, 'OrdersLayerVersionArn', ordersLayerArn)
     
     //Products Layer
     const productsLayerArn = ssm.StringParameter.valueForStringParameter(this, 'ProductsLayerVersionArn')
     const productsLayer = lambda.LayerVersion.fromLayerVersionArn(this, 'ProductsLayerVersionArn', productsLayerArn)
     
+
+    this.ordersHandler = new lamnbdaNodeJs.NodejsFunction(this, 'OrdersFunction', {
+      functionName: 'OrdersFunction',
+      entry: 'lambda/orders/ordersFunction.ts',
+      handler: 'handler',
+      memorySize: 128,
+      timeout: cdk.Duration.seconds(2),
+      bundling: {
+        minify: true,
+        sourceMap: false
+      },
+      environment: {
+        PRODUCTS_DDB: props.productsDdb.tableName,
+        ORDERS_DDB: ordersDdb.tableName
+      },
+      layers: [ordersLayer, productsLayer],
+      tracing: lambda.Tracing.ACTIVE,
+      insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0
+    })
+    ordersDdb.grantReadWriteData(this.ordersHandler)
   }
 }
