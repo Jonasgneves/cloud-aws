@@ -9,7 +9,7 @@ interface OrdersAppStackProps extends cdk.StackProps {
   productsDdb: dynamodb.Table
 }
 
-export class ordersAppStack extends cdk.Stack {
+export class OrdersAppStack extends cdk.Stack {
   readonly ordersHandler: lamnbdaNodeJs.NodejsFunction
 
   constructor(scop: Construct, id: string, props: OrdersAppStackProps) {
