@@ -8,6 +8,7 @@ import { AccessLogFormat } from 'aws-cdk-lib/aws-apigateway'
 interface ECommerceApiStackProps extends cdk.StackProps {
   productsFetchHandler: lambdaNodeJs.NodejsFunction
   productsAdminHandler: lambdaNodeJs.NodejsFunction
+  ordersHandler: lambdaNodeJs.NodejsFunction
 }
 
 export class ECommerceApiStack extends cdk.Stack {
@@ -36,6 +37,30 @@ export class ECommerceApiStack extends cdk.Stack {
       cloudWatchRole: true
     })
 
+    this.createProductsService(props, api)
+
+    this.createOrdersService(props, api)
+  }
+
+  private createOrdersService(props: ECommerceApiStackProps, api: apiGateway.RestApi) {
+    const ordersIntegration = new apiGateway.LambdaIntegration(props.ordersHandler)
+
+    // resource - /orders
+    const ordersResource = api.root.addResource('orders')
+
+    //GET /orders
+    //GET /orders?email=teste@gmail.com
+    //GET /orders?email=teste@gmail.com&orderId=123
+    ordersResource.addMethod('GET', ordersIntegration)
+
+    //DELETE /orders?email=teste@gmail.com&orderId=123
+    ordersResource.addMethod('DELETE', ordersIntegration)
+
+    //POST /orders 
+    ordersResource.addMethod('POST', ordersIntegration)
+  }
+
+  private createProductsService(props: ECommerceApiStackProps, api: apiGateway.RestApi) {
     const productsFetchIntegration = new apiGateway.LambdaIntegration(props.productsFetchHandler)
 
     // "/products"
@@ -56,6 +81,5 @@ export class ECommerceApiStack extends cdk.Stack {
 
     // DELETE /products/{id}
     productsIdResource.addMethod('DELETE', productAdminIntegration)
-
   }
 }

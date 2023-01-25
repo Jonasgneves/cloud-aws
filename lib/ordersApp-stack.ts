@@ -58,5 +58,6 @@ export class ordersAppStack extends cdk.Stack {
       insightsVersion: lambda.LambdaInsightsVersion.VERSION_1_0_119_0
     })
     ordersDdb.grantReadWriteData(this.ordersHandler)
+    props.productsDdb.grantReadData(this.ordersHandler)
   }
 }
