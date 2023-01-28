@@ -3,7 +3,7 @@ import { Order, OrderRepository } from "/opt/nodejs/ordersLayer"
 import { Product, ProductRepository } from "/opt/nodejs/productsLayer"
 import * as AWSXray from 'aws-xray-sdk'
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from "aws-lambda"
-import { OrderProductResponse, OrderRequest } from "/opt/nodejs/ordersApiLayer"
+import { CarrierType, OrderProductResponse, OrderRequest, OrderResponse, PaymentType, ShippingType } from "/opt/nodejs/ordersApiLayer"
 
 AWSXray.captureAWS(require('aws-sdk'))
 
@@ -38,6 +38,22 @@ export async function handler(event: APIGatewayProxyEvent, context: Context): Pr
     }
   } else if (method === 'POST') {
     console.log('POST /orders')
+    const orderRequest = JSON.parse(event.body!) as OrderRequest
+    const products = await productRepository.getProductsByIds(orderRequest.productIds)
+    if (products.length === orderRequest.productIds.length) {
+      const order = buildOrder(orderRequest, products)
+      const orderCreated = await orderRepository.createOrder(order)
+      
+      return {
+        statusCode: 201,
+        body: JSON.stringify(convertToOrderResponse(orderCreated))
+      }
+    } else {
+       return {
+        statusCode: 404,
+        body: 'Some product was not found'
+       }
+    }
 
   } else if (method === 'DELETE') {
     console.log('DELETE /orders')
@@ -48,6 +64,31 @@ export async function handler(event: APIGatewayProxyEvent, context: Context): Pr
     statusCode: 400,
     body: 'Bad request'
   }
+}
+
+function convertToOrderResponse(order: Order): OrderResponse {
+  const orderProducts: OrderProductResponse[] = []
+  order.products.forEach((product) => {
+    orderProducts.push({
+      code: product.code,
+      price: product.price
+    })
+  })
+  const orderResponse: OrderResponse = {
+    email: order.pk,
+    id: order.sk!,
+    createdAt: order.createdAt!,
+    products: orderProducts,
+    billing: {
+      payment: order.billing.payment as PaymentType,
+      totalPrice: order.billing.totalPrice
+    },
+    shipping: {
+      type: order.shipping.type as ShippingType,
+      carrier: order.shipping.carrier as CarrierType
+    }
+  }
+  return orderResponse
 }
 
 function buildOrder(orderRequest: OrderRequest, products: Product[]): Order {
